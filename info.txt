@@ -1,0 +1,27 @@
+npm i dotenv express mongoose cookie-parse cors 
+npm i -D nodemon prettier
+
+
+touch .gitignore .prettierrc .prettierignore
+
+SRC/
+
+touch app.js constants.js index.js
+mkdir controllers db middlewares models routes utils 
+
+
+console.log(connectionInstance);
+console.log(connectionInstance.options);
+console.log(connectionInstance.connection.port);
+console.log(connectionInstance.connection.host);
+console.log(connectionInstance.connection.name);
+
+
+1. Set Connection for MMongo DB in DB Folder.
+2. Set up dotenv/config.
+3. cors , cookie, limits, (Discussion about Boody-Parser, Multex).
+
+
+// (error, req, res, next)
+
+4. Making Async Handler 
