@@ -1,5 +1,7 @@
-npm i dotenv express mongoose cookie-parse cors 
+npm i dotenv express mongoose
 npm i -D nodemon prettier
+
+npm i cookie-parse cors 
 
 
 touch .gitignore .prettierrc .prettierignore
@@ -25,3 +27,172 @@ console.log(connectionInstance.connection.name);
 // (error, req, res, next)
 
 4. Making Async Handler 
+5. Making Modals
+
+npm i mongoose-aggregate-paginate-v2
+npm i bcrypt jsonwentoken
+
+
+video -> 
+    plugin -> mongooseAggregatePaginate
+
+userSchema -> 
+    pre("save") -> password encryption
+    methods     -> verify if password is correct.
+                -> Acess Token
+                -> Refresh Token
+
+
+file uploading ->
+            MULTER 
+            express-fileupload
+            cloudinary
+
+npm i cloudinary multer 
+
+utils       -> cloudinary 
+middlewares -> multer
+
+async functions always return promises
+where as normal functions return what we are returning.
+
+Make routers controllers.
+
+Query { 
+  mongooseCollection: Collection {
+    collection: Collection { s: [Object], client: [MongoClient] },
+    Promise: [Function: Promise],
+    modelName: 'User',
+    _closed: false,
+    opts: {
+      autoIndex: true,
+      autoCreate: true,
+      autoSearchIndex: false,
+      schemaUserProvidedOptions: [Object],
+      capped: false,
+      Promise: undefined,
+      '$wasForceClosed': undefined
+    },
+    name: 'users',
+    collectionName: 'users',
+    conn: NativeConnection {
+      base: [Mongoose],
+      collections: [Object],
+      models: [Object],
+      id: 0,
+      _connectionString: 'mongodb+srv://lovishbansal441:xuBDBu8ys3frY7Hz@youtubecluster1.jmcerq5.mongodb.net//MyTube',
+      db: [Db],
+      host: 'ac-dlbabus-shard-00-00.jmcerq5.mongodb.net',
+      port: 27017,
+      name: '/MyTube'
+    },
+  },
+  model: Model { User },
+  schema: Schema {
+    obj: {
+      username: [Object],
+      email: [Object],
+      fullName: [Object],
+      avatar: [Object],
+      coverImage: [Object],
+      password: [Object],
+      refreshToken: [Object],
+      watchHistory: [Array]
+    },
+    paths: {
+      username: [SchemaString],
+      email: [SchemaString],
+      fullName: [SchemaString],
+      avatar: [SchemaString],
+      coverImage: [SchemaString],
+      password: [SchemaString],
+      refreshToken: [SchemaString],
+      watchHistory: [SchemaArray],
+      _id: [SchemaObjectId],
+      createdAt: [SchemaDate],
+      updatedAt: [SchemaDate],
+      __v: [SchemaNumber]
+    },
+    aliases: {},
+    subpaths: { 'watchHistory.$': [SchemaObjectId] },
+    virtuals: { id: [VirtualType] },
+    singleNestedPaths: {},
+    nested: {},
+    inherits: {},
+    callQueue: [],
+    _indexes: [],
+    _searchIndexes: [],
+    methods: {
+      initializeTimestamps: [Function (anonymous)],
+      isPasswordCorrect: [AsyncFunction (anonymous)],
+      generateAccessToken: [Function (anonymous)],
+      generateRefreshToken: [Function (anonymous)]
+    },
+    methodOptions: {},
+    statics: {},
+    tree: {
+      username: [Object],
+      email: [Object],
+      fullName: [Object],
+      avatar: [Object],
+      coverImage: [Object],
+      password: [Object],
+      refreshToken: [Object],
+      watchHistory: [Array],
+      _id: [Object],
+      createdAt: [Object],
+      updatedAt: [Function: Date],
+      __v: [Function: Number],
+      id: [VirtualType]
+    },
+    query: {},
+    childSchemas: [],
+    plugins: [ [Object], [Object], [Object], [Object], [Object] ],
+    '$id': 1,
+    mapPaths: [],
+    s: { hooks: [Kareem] },
+    _userProvidedOptions: { timestamps: true },
+    options: {
+      strict: true,
+      strictQuery: false,
+      bufferCommands: true,
+      capped: false,
+      versionKey: '__v',
+      optimisticConcurrency: false,
+      minimize: true,
+      autoIndex: null,
+      discriminatorKey: '__t',
+      shardKey: null,
+      read: null,
+      validateBeforeSave: true,
+      validateModifiedOnly: false,
+      _id: true,
+      id: true,
+      typeKey: 'type',
+      timestamps: true,
+      pluralization: true
+    },
+    '$timestamps': { createdAt: 'createdAt', updatedAt: 'updatedAt' },
+    '$globalPluginsApplied': true
+  },
+  op: 'findOne',
+  _conditions: { username: 'lovish._.111' },
+  _collection: NodeCollection {
+    collection: Collection {
+      collection: [Collection],
+      Promise: [Function: Promise],
+      modelName: 'User',
+      _closed: false,
+      opts: [Object],
+      name: 'users',
+      collectionName: 'users',
+      conn: [NativeConnection],
+      queue: [],
+      buffer: false,
+      emitter: [EventEmitter]
+    },
+    collectionName: 'users'
+  },
+}
+
+Learn aggreation pipelines
