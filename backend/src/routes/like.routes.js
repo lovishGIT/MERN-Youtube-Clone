@@ -4,10 +4,11 @@ import { ToggleLikeComment, ToggleLikeTweet, ToggleLikeVideo, getLikedVideos } f
 
 const likeRouter= express.Router();
 
-likeRouter.post("/video/:id", verifyJWT, ToggleLikeVideo);
-likeRouter.post("/comment/:id", verifyJWT, ToggleLikeComment);
-likeRouter.post("/tweet/:id", verifyJWT, ToggleLikeTweet);
 likeRouter.get("/LikedVideos", verifyJWT, getLikedVideos);
+
+likeRouter.post("/toggle/video/:id", verifyJWT, ToggleLikeVideo);
+likeRouter.post("/toggle/comment/:id", verifyJWT, ToggleLikeComment);
+likeRouter.post("/toggle/tweet/:id", verifyJWT, ToggleLikeTweet);
 
 
 export default likeRouter;

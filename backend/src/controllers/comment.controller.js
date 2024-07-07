@@ -10,13 +10,39 @@ export const GetAllComments= asyncHandler(async(req, res)=> {
     if(!video || !video.isPublished) {
         throw new ApiError(404, "Video Not Found.")
     }
-    const allComments= await Comment.find({video: video._id})
+    const allComments= await Comment.aggregate([
+        {
+            $match: {video: video._id}, //new mongoose.Types.ObjectId is not used because we are directly accessing _id only.
+        }, {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "likes",
+                pipeline: [
+                    {
+                        $group: {_id: "$comment", count: {$sum: 1}}
+                    }
+                ]
+            }
+        }, {
+            $project: {
+                _id: 1,
+                content: 1,
+                tag: 1,
+                owner: 1,
+                likes: 1,
+                createdAt: 1,
+                updatedAt: 1,
+            }
+        }
+    ]);
 
     // console.log(allComments);
     return res     
             .status(200)
             .json(new ApiResponse(200, allComments, { numberOfComments: allComments.length }, "Comments fetched succesfully"));
-}); // after we will add how many likes does each comment have
+});
 
 export const AddComment= asyncHandler(async(req, res)=> {
     let content= req.body.content;
@@ -82,7 +108,7 @@ export const UpdateComment= asyncHandler(async(req, res)=> {
         $addToSet:{
             tag: "Edited",
         },
-    }, {new: true});
+    }, {new: true}).select("-__v");
     if(!comment) {
         throw new ApiError(404, "Your Comment not Found.");
     } 
@@ -91,7 +117,7 @@ export const UpdateComment= asyncHandler(async(req, res)=> {
             .status(200)
             .json(new ApiResponse(200, comment, "Comment Updated Successfully"));
 
-}) // only comment's owner can update.
+}) // only comment's owner
 
 export const RemoveComment= asyncHandler(async(req, res)=> {
     const user = req.user;
@@ -100,7 +126,7 @@ export const RemoveComment= asyncHandler(async(req, res)=> {
     }
 
     const {id}= req.params;
-    const comment= await Comment.findById(id);
+    const comment= await Comment.findById(id).select("-__v");
     if(!comment) {
         throw new ApiError(404, "Comment not found!");
     }
@@ -117,4 +143,4 @@ export const RemoveComment= asyncHandler(async(req, res)=> {
             .json(new ApiResponse(200, comment, "Comment Deleted Successfully"))
 
 
-}); // both video's owner and comment's owner can access
+}); // both video's owner and comment's owner

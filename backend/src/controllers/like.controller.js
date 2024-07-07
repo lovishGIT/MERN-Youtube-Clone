@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Comment from "../models/comment.model.js";
 import Like from "../models/like.model.js";
 import { Tweet } from "../models/tweet.model.js";
@@ -36,7 +37,7 @@ export const ToggleLikeVideo= asyncHandler(async(req, res)=> {
         });
         status= 201;
     } else {
-        like= await Like.findByIdAndDelete(like._id);
+        like= await Like.findByIdAndDelete(like._id).select("-__v");
         status= 200;
     }
 
@@ -73,7 +74,7 @@ export const ToggleLikeComment= asyncHandler(async(req, res)=> {
         });
         status= 201;
     } else {
-        like= await Like.findByIdAndDelete(like._id);
+        like= await Like.findByIdAndDelete(like._id).select(" -__v");
         status= 200;
     }
 
@@ -110,21 +111,21 @@ export const ToggleLikeTweet= asyncHandler(async(req, res)=> {
         });
         status= 201;
     } else {
-        like= await Like.findByIdAndDelete(like._id);
+        like= await Like.findByIdAndDelete(like._id).select(" -__v");
         status= 200;
     }
 
     return res  
             .status(status)
             .json(new ApiResponse(status, like, `Tweet ${status == 201 ? "" : "Un"}Liked`));
-}); // Testing Pending when tweet cont is made
+});
 
 export const getLikedVideos= asyncHandler(async(req, res)=> {
     const user= req.user;
 
     const allVideos= await Like.aggregate([
         {
-            $match: {likedBy: user._id}
+            $match: {likedBy: user._id} //new mongoose.Types.ObjectId is not used because we are directly accessing _id only.
         }, {
             $lookup: {
                 from: "videos",
