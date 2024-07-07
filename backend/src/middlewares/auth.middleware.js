@@ -1,29 +1,25 @@
 import { ApiError } from "../utils/apiErrors.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const verifyJWT= async (req, res, next)=> {
-    // try {
-
+export const verifyJWT= asyncHandler( async(req, res, next)=> {
+    try {
         let accessToken = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");  
-
-        // console.log(req);
-
         if(!accessToken) {
-            new ApiError(500, "Internal Server Error");
+            throw new ApiError(401, error.message || "Unauthorized Request");
         }
 
         const decodedToken= jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
 
         const user= await User.findById(decodedToken?._id).select("-password -refreshToken")
         if(!user) {
-            throw new ApiError(500, "Invalid Acess Token")
+            throw new ApiError(500, "Invalid Access Token")
         }
 
         req.user= user;
         next();
-
-    // } catch (error) {
-    //     throw new ApiError(401, error.message || "Invalid Access Token")
-    // }
-}
+    } catch (error) {
+        throw new ApiError(500, "Internal Server Error");
+    }
+})

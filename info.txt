@@ -196,3 +196,8 @@ Query {
 }
 
 Learn aggreation pipelines
+
+
+Atlas Seach Index
+$search pipeline
+more pipelines

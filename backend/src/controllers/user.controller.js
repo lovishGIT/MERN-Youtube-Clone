@@ -1,37 +1,26 @@
+import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/apiErrors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { DeleteFromCloudinary, UploadOnCloudinary } from "../utils/cloudinary.js";
+import { DeleteImageFromCloudinary, UploadOnCloudinary } from "../utils/cloudinary.js";
 import { getAccessAndRefreshTokens } from "../utils/generateTokens.js"
-
-import jwt from "jsonwebtoken";
-import { User } from "../models/user.model.js";
 
 
 export const registerUser = asyncHandler(async (req, res)=>{
     
-    // console.log(req.body);
     const {fullName, email, username, password}= req.body;
-    // why this is better??
-    // by this only necessary data will be taken
-
     if( [fullName, email, username, password].some((field) => field?.trim() == "")) { // checking if any value is empty.
         throw new ApiError(400, "Please fill all the details.");
     }
     
-    // const findUserByusername= await User.findOne({username: username}) 
-    // const findUserByemail= await User.findOne({email: email}) 
-    
     const findUser= await User.findOne({
         $or: [{username}, {email}]
-    })
-
-    // if(findUserByusername?.username || findUserByemail?.email){
+    });
     if(findUser){
         throw new ApiError(409, "User already exists. Please Login");
     } 
-    
     const finalUser = {
         username: username?.toLowerCase(),
         fullName, 
@@ -40,21 +29,14 @@ export const registerUser = asyncHandler(async (req, res)=>{
     }
 
     // console.log(req?.files);
-    // console.log(req?.files?.avatar[0]?.path);
-
+    console.log(req?.files?.avatar[0]?.path);
     const avatarLocalpath = req.files?.avatar[0]?.path;
-    let coverImageLocalpath;
-    if(req.files?.coverImage) 
-        coverImageLocalpath = req.files?.coverImage[0]?.path;
+    const avatar= await UploadOnCloudinary(avatarLocalpath);
+    if(!avatar) throw new ApiError(500, "Error Uploading Avatar.")
+    finalUser.avatar= avatar.url;
 
-    // Since Avatar is Compulsary.
-    // if(avatarLocalpath) { 
-        const avatar= await UploadOnCloudinary(avatarLocalpath);
-        if(!avatar) throw new ApiError(500, "Error Uploading Avatar.")
-        finalUser.avatar= avatar.url;
-    // }
-
-    if(coverImageLocalpath) {
+    if(req.files?.coverImage)  {
+        let coverImageLocalpath = req.files?.coverImage[0]?.path;
         const coverImage= await UploadOnCloudinary(coverImageLocalpath);
         if(!coverImage) throw new ApiError(500, "Error Uploading Cover Image.")
         finalUser.coverImage= coverImage.url;
@@ -62,8 +44,6 @@ export const registerUser = asyncHandler(async (req, res)=>{
 
     
     const user= await User.create(finalUser);
-    console.log(user);
-
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
@@ -71,10 +51,9 @@ export const registerUser = asyncHandler(async (req, res)=>{
         throw new ApiError(500, "Something went wrong while registering the user.")
     }
 
-    return res.status(200).json(new ApiResponse(
-        200, createdUser, "User Registered Successfully." 
-    ))
-
+    return res
+            .status(200)
+            .json(new ApiResponse(200, createdUser, "User Registered Successfully."))
 });
 
 export const loginUser = asyncHandler(async(req, res)=>{
@@ -226,8 +205,9 @@ export const updateAccountDetails= asyncHandler(async(req, res)=>{
         {new: true}
     ).select("-password -refreshToken")
 
-    return res.status(200)
-              .json(new ApiResponse(200, newUser, "User Updated Successfully."))
+    return res
+            .status(200)
+            .json(new ApiResponse(200, newUser, "User Updated Successfully."))
 });
 
 export const updateUserAvatar= asyncHandler(async(req, res)=>{
@@ -242,7 +222,7 @@ export const updateUserAvatar= asyncHandler(async(req, res)=>{
     }
 
     // Delete Old URL
-    await DeleteFromCloudinary(req.user?.avatar);
+    await DeleteImageFromCloudinary(req.user?.avatar);
 
     const newUser= await User.findByIdAndUpdate(req.user?._id, 
         {
@@ -267,7 +247,7 @@ export const updateUserCoverImage= asyncHandler(async(req, res)=>{
     }
 
     if(req.user?.coverImage) {
-        await DeleteFromCloudinary(req.user.coverImage);
+        await DeleteImageFromCloudinary(req.user.coverImage);
     }
 
     const newUser= await User.findByIdAndUpdate(req.user?._id, 
@@ -284,9 +264,6 @@ export const updateUserCoverImage= asyncHandler(async(req, res)=>{
 export const getUserChannelProfile= asyncHandler(async(req, res)=> {
     // if u want to visit a channel, Example You go to https://www.youtube.com/@chaiaurcode
     // this chaiaurcode is a channel name.
-    
-    // console.log(req.params);
-    // console.log(req.cookies.refreshToken);
 
     const existingUserToken= req.cookies.refreshToken || req.body.refreshToken
     const existingUserId= await User.findOne({
