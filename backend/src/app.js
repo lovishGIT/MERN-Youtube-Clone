@@ -35,4 +35,8 @@ app.use("/api/v1/like", likeRouter);
 app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/tweet", tweetRouter);
 
+
+import { heathCheck } from "./controllers/healthcheck.controller.js";
+app.get("/api/v1/health", heathCheck);
+
 export {app};
