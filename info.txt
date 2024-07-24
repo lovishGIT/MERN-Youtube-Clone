@@ -1,7 +1,7 @@
 npm i dotenv express mongoose
 npm i -D nodemon prettier
 
-npm i cookie-parse cors 
+npm i cookie-parse cors
 
 
 touch .gitignore .prettierrc .prettierignore
@@ -9,7 +9,7 @@ touch .gitignore .prettierrc .prettierignore
 SRC/
 
 touch app.js constants.js index.js
-mkdir controllers db middlewares models routes utils 
+mkdir controllers db middlewares models routes utils
 
 
 console.log(connectionInstance);
@@ -26,17 +26,17 @@ console.log(connectionInstance.connection.name);
 
 // (error, req, res, next)
 
-4. Making Async Handler 
+4. Making Async Handler
 5. Making Modals
 
 npm i mongoose-aggregate-paginate-v2
 npm i bcrypt jsonwentoken
 
 
-video -> 
+video ->
     plugin -> mongooseAggregatePaginate
 
-userSchema -> 
+userSchema ->
     pre("save") -> password encryption
     methods     -> verify if password is correct.
                 -> Acess Token
@@ -44,13 +44,13 @@ userSchema ->
 
 
 file uploading ->
-            MULTER 
+            MULTER
             express-fileupload
             cloudinary
 
-npm i cloudinary multer 
+npm i cloudinary multer
 
-utils       -> cloudinary 
+utils       -> cloudinary
 middlewares -> multer
 
 async functions always return promises
@@ -58,7 +58,7 @@ where as normal functions return what we are returning.
 
 Make routers controllers.
 
-Query { 
+Query {
   mongooseCollection: Collection {
     collection: Collection { s: [Object], client: [MongoClient] },
     Promise: [Function: Promise],
@@ -201,3 +201,38 @@ Learn aggreation pipelines
 Atlas Seach Index
 $search pipeline
 more pipelines
+
+
+$addFields pipeline
+    $addFields: {
+            videosCount: { $size: "$videos" },
+    },
+$project pipeline
+    $project: {
+            videos: 0, // dont show videos
+            likes: 1, // show likes
+    },
+
+$map pipeline
+videosWithLikes: {
+                    $map: {
+                        input: "$videos",
+                        as: "video",
+                        in: {
+                            _id: "$$video._id",
+                            likesCount: {
+                                $size: {
+                                    $filter: {
+                                        input: "$likes",
+                                        cond: {
+                                            $eq: [
+                                                "$$this.video",
+                                                "$$video._id",
+                                            ],
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },

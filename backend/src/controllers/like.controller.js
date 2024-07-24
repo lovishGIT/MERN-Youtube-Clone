@@ -6,6 +6,7 @@ import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/apiErrors.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.model.js";
 
 export const ToggleLikeVideo= asyncHandler(async(req, res)=> {
     let videoId= req.params.id;
@@ -23,7 +24,7 @@ export const ToggleLikeVideo= asyncHandler(async(req, res)=> {
 
     if(video.owner.toString() === user._id.toString()) {
         throw new ApiError(403, "You cant post likes on your video.");
-    } 
+    }
 
     let status;
     let like= await Like.findOne({
@@ -41,7 +42,7 @@ export const ToggleLikeVideo= asyncHandler(async(req, res)=> {
         status= 200;
     }
 
-    return res  
+    return res
             .status(status)
             .json(new ApiResponse(status, like, `Video ${status == 201 ? "" : "Un"}Liked`));
 });
@@ -62,6 +63,12 @@ export const ToggleLikeComment= asyncHandler(async(req, res)=> {
         throw new ApiError(403, "You cant post likes on your comment.");
     }
 
+    const tweetOrVideo = await Video.findOne({ _id: comment.video }) ?? await Tweet.findOne({ _id: comment.tweet });
+    if (user._id.toString() == tweetOrVideo.owner.toString()) {
+        comment.tag.push("Liked by Author");
+        // const authorAvatar = await User.findById(user._id).select("avatar");
+    }
+
     let status;
     let like= await Like.findOne({
         comment: commentId,
@@ -78,10 +85,10 @@ export const ToggleLikeComment= asyncHandler(async(req, res)=> {
         status= 200;
     }
 
-    return res  
+    return res
             .status(status)
             .json(new ApiResponse(status, like, `Comment ${status == 201 ? "" : "Un"}Liked`));
-});
+}); // sending author avatar id a todo
 
 export const ToggleLikeTweet= asyncHandler(async(req, res)=> {
     let tweetId= req.params.id;
@@ -115,7 +122,7 @@ export const ToggleLikeTweet= asyncHandler(async(req, res)=> {
         status= 200;
     }
 
-    return res  
+    return res
             .status(status)
             .json(new ApiResponse(status, like, `Tweet ${status == 201 ? "" : "Un"}Liked`));
 });

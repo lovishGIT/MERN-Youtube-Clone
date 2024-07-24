@@ -5,9 +5,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const verifyJWT= asyncHandler( async(req, res, next)=> {
     try {
-        let accessToken = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");  
+        let accessToken = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
         if(!accessToken) {
-            throw new ApiError(401, error.message || "Unauthorized Request");
+            throw new ApiError(401, "Unauthorized Request");
         }
 
         const decodedToken= jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
@@ -20,6 +20,6 @@ export const verifyJWT= asyncHandler( async(req, res, next)=> {
         req.user= user;
         next();
     } catch (error) {
-        throw new ApiError(500, "Internal Server Error");
+        throw new ApiError(500, error.message || "Internal Server Error");
     }
 })

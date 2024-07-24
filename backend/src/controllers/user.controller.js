@@ -9,27 +9,27 @@ import { getAccessAndRefreshTokens } from "../utils/generateTokens.js"
 
 
 export const registerUser = asyncHandler(async (req, res)=>{
-    
+
     const {fullName, email, username, password}= req.body;
     if( [fullName, email, username, password].some((field) => field?.trim() == "")) { // checking if any value is empty.
         throw new ApiError(400, "Please fill all the details.");
     }
-    
+
     const findUser= await User.findOne({
         $or: [{username}, {email}]
     });
     if(findUser){
         throw new ApiError(409, "User already exists. Please Login");
-    } 
+    }
     const finalUser = {
         username: username?.toLowerCase(),
-        fullName, 
-        email, 
+        fullName,
+        email,
         password,
     }
 
     // console.log(req?.files);
-    console.log(req?.files?.avatar[0]?.path);
+    // console.log(req?.files?.avatar[0]?.path);
     const avatarLocalpath = req.files?.avatar[0]?.path;
     const avatar= await UploadOnCloudinary(avatarLocalpath);
     if(!avatar) throw new ApiError(500, "Error Uploading Avatar.")
@@ -42,7 +42,6 @@ export const registerUser = asyncHandler(async (req, res)=>{
         finalUser.coverImage= coverImage.url;
     }
 
-    
     const user= await User.create(finalUser);
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
@@ -57,14 +56,14 @@ export const registerUser = asyncHandler(async (req, res)=>{
 });
 
 export const loginUser = asyncHandler(async(req, res)=>{
-    // login details 
-    // email / username 
+    // login details
+    // email / username
     // password
 
     // give him access token with acess token expiry.
     // give him refresh token with refresh token expiry.
     // token in form of cookies
-    
+
     const {username, email, password}= req.body;
     if(!username && !email) {
         console.log(req.body);
@@ -85,7 +84,7 @@ export const loginUser = asyncHandler(async(req, res)=>{
     // after this we want to access newly updated user. So we have to access him again in db.
     // Generally getting data via id is faster. So, i saved Id here.
 
-    let saveId= existedUser._id; 
+    let saveId= existedUser._id;
     const {accessToken, refreshToken}= await getAccessAndRefreshTokens(saveId);
 
     existedUser= await User.findById(saveId).select("-password -refreshToken");
@@ -100,7 +99,7 @@ export const loginUser = asyncHandler(async(req, res)=>{
               .json(new ApiResponse(
                 200, {
                     user: existedUser, accessToken, refreshToken
-                }, 
+                },
                 "User Logged In Successfully"
               ));
 
@@ -139,9 +138,9 @@ export const refreshAccessToken= asyncHandler(async(req, res)=>{
         if(!incomingRefreshToken) {
             throw new ApiError(401, "UnAuthorized Request.")
         }
-    
+
         const decodedToken= jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-    
+
         const user= await User.findById(decodedToken?._id);
         if(!user) {
             throw new ApiError(401, "Invalid Refresh Token.")
@@ -151,7 +150,7 @@ export const refreshAccessToken= asyncHandler(async(req, res)=>{
             httpOnly: true,
             secure: true
         }
-    
+
         res.set(200)
             .cookie("accessToken", newAccessToken, options)
             .cookie("refreshToken", incomingRefreshToken, options)
@@ -197,7 +196,7 @@ export const updateAccountDetails= asyncHandler(async(req, res)=>{
         throw new ApiError(400, "All Fields are required.")
     }
 
-    const newUser= await User.findByIdAndUpdate(req.user?._id, 
+    const newUser= await User.findByIdAndUpdate(req.user?._id,
         {
             $set: {fullName, email},
             // es6 syntax fullName: fullName is equivalent to fullName.
@@ -224,7 +223,7 @@ export const updateUserAvatar= asyncHandler(async(req, res)=>{
     // Delete Old URL
     await DeleteImageFromCloudinary(req.user?.avatar);
 
-    const newUser= await User.findByIdAndUpdate(req.user?._id, 
+    const newUser= await User.findByIdAndUpdate(req.user?._id,
         {
             $set: {avatar: newAvatar.url}
         },
@@ -250,7 +249,7 @@ export const updateUserCoverImage= asyncHandler(async(req, res)=>{
         await DeleteImageFromCloudinary(req.user.coverImage);
     }
 
-    const newUser= await User.findByIdAndUpdate(req.user?._id, 
+    const newUser= await User.findByIdAndUpdate(req.user?._id,
         {
             $set: {coverImage: newCoverImage.url}
         },
@@ -285,6 +284,13 @@ export const getUserChannelProfile= asyncHandler(async(req, res)=> {
             }
         }, {
             $lookup: {
+                from: "videos",
+                localField: "_id",
+                foreignField: "owner",
+                as: "videos",
+            }
+        }, {
+            $lookup: {
                 from: "subscriptions",
                 localField: "_id",
                 foreignField: "channel",
@@ -299,6 +305,7 @@ export const getUserChannelProfile= asyncHandler(async(req, res)=> {
             }
         }, {
             $addFields: {
+                // videosCount: {$size: "$videos"},
                 subscribersCount: {$size: "$subscribers"},
                 subscribedToCount: {$size: "$subscribedTo"},
                 isSubscribed: {$cond: {
@@ -315,6 +322,8 @@ export const getUserChannelProfile= asyncHandler(async(req, res)=> {
                 avatar: 1,
                 coverImage: 1,
                 createdAt: 1,
+                videos: 1,
+                // videosCount: 1,
                 subscribersCount: 1,
                 subscribedToCount: 1,
                 isSubscribed: 1,
@@ -326,8 +335,9 @@ export const getUserChannelProfile= asyncHandler(async(req, res)=> {
     }
     // console.log(channel);
 
-    return res.status(200)
-              .json(new ApiResponse(200, channel[0], "User Channel Fetched Successfully."));
+    return res
+        .status(200)
+        .json(new ApiResponse(200, channel[0], "User Channel Fetched Successfully."));
 
 });
 
@@ -338,7 +348,7 @@ export const getWatchHistory= asyncHandler(async(req, res)=> {
                 _id: new mongoose.Types.ObjectId(req.user._id), //new mongoose.Types.ObjectId is not used because we are directly accessing _id only.
             }
             // Here sir used this optionally.
-        }, 
+        },
         {
             $lookup: {
                 from: "videos",
@@ -371,7 +381,7 @@ export const getWatchHistory= asyncHandler(async(req, res)=> {
                     }, // since array return krega to only first owner nikalke object dedo
                 ],
             },
-        }, 
+        },
     ])
 
     return res.status(200)
