@@ -1,9 +1,22 @@
-import React from 'react'
+import React from 'react';
+
+import Home from './pages/home';
+import Search from './pages/search';
+import DefaultLayout from './components/global/defaultLayout';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 export default function App() {
     return (
-        <div className="h-[100vh] w-full bg-black text-white flex justify-center items-center">
-            <h1 className="text-4xl">Hello World!</h1>
-        </div>
+        <BrowserRouter>
+            <DefaultLayout>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route
+                        path="/search"
+                        element={<Search />}
+                    />
+                </Routes>
+            </DefaultLayout>
+        </BrowserRouter>
     );
-};
+}

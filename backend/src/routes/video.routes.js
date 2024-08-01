@@ -1,12 +1,13 @@
 import express from 'express';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
-import { DeleteVideoById, getAllVideos, getVideoById, publishVideo, togglePublish, updateVideo } from '../controllers/video.controller.js';
+import { DeleteVideoById, getAllVideos, getRandomlyVideos, getVideoById, publishVideo, togglePublish, updateVideo } from '../controllers/video.controller.js';
 
 const videoRouter= express.Router();
 
 videoRouter.get("/watch?:id", getVideoById);
 videoRouter.get("/channel", getAllVideos);
+videoRouter.get("/random", getRandomlyVideos);
 
 // secured routes
 videoRouter.post("/upload", verifyJWT,  upload.fields([{

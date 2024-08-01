@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import { DeleteImageFromCloudinary, DeleteVideoFromCloudinary, UploadOnCloudinary } from "../utils/cloudinary.js";
 
 export const publishVideo= asyncHandler(async(req, res)=> {
-    // const {videoFile, thumbnail, title, description, views, likes, isPublished, owner} = 
+    // const {videoFile, thumbnail, title, description, views, likes, isPublished, owner} =
     const {title, description, isPublished} = req.body;
 
     const owner = req.user;
@@ -30,8 +30,8 @@ export const publishVideo= asyncHandler(async(req, res)=> {
     }
 
     const videoUpload= await Video.create({
-        title, description, owner, 
-        videoFile: videoFile.url, 
+        title, description, owner,
+        videoFile: videoFile.url,
         duration: videoFile.duration,
         thumbnail: thumbnail.url,
         isPublished: isPublished || true,
@@ -44,9 +44,9 @@ export const publishVideo= asyncHandler(async(req, res)=> {
 });
 
 export const getAllVideos= asyncHandler(async(req, res)=> {
-    let {username, userId, 
+    let {username, userId,
         page= 1, limit= 10, query="", sortBy= "_id", sortType= "asc"
-    } = req.query;      
+    } = req.query;
     const ownerUser= await User.findOne(
         {$or: [{username}, {_id: userId}]}
     );
@@ -68,18 +68,18 @@ export const getAllVideos= asyncHandler(async(req, res)=> {
         }, {
             $match: {
                 $and: [{owner: ownerUser._id}, {isPublished: true}]
-            }, 
+            },
         }, {
             $sort: {
                 [sortBy]: sortType == "asc" ? 1 : -1,
             }
-        }, { 
-            $skip: (page - 1) * limit, 
+        }, {
+            $skip: (page - 1) * limit,
             // if page 2, so (2-1)* 10= 10
             // 10 videos will be skipped
         }, {
             $limit: limit
-        },  
+        },
     ])
 
     if(!AllVideos) {
@@ -107,6 +107,97 @@ export const getVideoById= asyncHandler(async(req, res)=> {
             .json(new ApiResponse(200, video, "Enjoy The Video."));
 }); // In future, likes, comments, etc.
 
+export const getRandomlyVideos = asyncHandler(async (req, res) => {
+    let {
+        page = 1,
+        limit = 10,
+        query,
+        sortBy = "_id",
+        sortType = "asc",
+    } = req.query;
+    let AllVideos;
+    if (!query) {
+        AllVideos = await Video.aggregate([
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "userInfo",
+                },
+            },
+            {
+                $addFields: {
+                    userAvatar: {
+                        $arrayElemAt: ["$userInfo.avatar", 0],
+                    },
+                    userName: {
+                        $arrayElemAt: ["$userInfo.username", 0],
+                    },
+                },
+            },
+            {
+                $project: {
+                    thumbnail: 1,
+                    title: 1,
+                    description: 1,
+                    duration: 1,
+                    views: 1,
+                    likes: 1,
+                    createdAt: 1,
+                    userName: 1,
+                    userAvatar: 1,
+                },
+            },
+            {
+                $sort: {
+                    [sortBy]: sortType == "asc" ? 1 : -1,
+                },
+            },
+            {
+                $skip: (page - 1) * limit,
+            },
+            {
+                $limit: limit,
+            },
+        ]);
+    } else {
+        AllVideos = await Video.aggregate([
+            {
+                $search: {
+                    index: "searchVideos", // Atlas Search Index
+                    text: {
+                        query: query,
+                        path: {
+                            wildcard: "*",
+                        },
+                    },
+                },
+            },
+            {
+                $sort: {
+                    [sortBy]: sortType == "asc" ? 1 : -1,
+                },
+            },
+            {
+                $skip: (page - 1) * limit,
+            },
+            {
+                $limit: limit,
+            },
+        ]);
+    }
+    if (!AllVideos) {
+        return res.status(200).end("No Content to be displayed.");
+    }
+    return (
+        res .status(200)
+            .json(
+                new ApiResponse(200, AllVideos, "Videos fetched Successfully.")
+            )
+    );
+});
+
 export const togglePublish= asyncHandler(async(req, res)=> {
     const reqId= req.params?.id;
     if(!reqId) {
@@ -116,7 +207,7 @@ export const togglePublish= asyncHandler(async(req, res)=> {
         throw new ApiError(401, "Unauthorized");
     }
 
-    const video= await Video.findByIdAndUpdate(reqId, [{ 
+    const video= await Video.findByIdAndUpdate(reqId, [{
         $set: {
             isPublished: {
                 $not: "$isPublished"
@@ -158,12 +249,12 @@ export const updateVideo= asyncHandler(async(req, res)=> {
     if(!title && !description && !localThumbnailPath) {
         throw new ApiError(400, "No Updates specified.");
     }
-    
+
     if(title) video.title= title;
     if(description) video.description= description;
     if(localThumbnailPath) {
         const newThumbnail= await UploadOnCloudinary(localThumbnailPath);
-        if(newThumbnail.url) video.thumbnail= newThumbnail.url;
+        if(newThumbnail?.url) video.thumbnail= newThumbnail.url;
     }
 
     await video.save();
@@ -177,7 +268,7 @@ export const DeleteVideoById= asyncHandler(async(req, res)=> {
     if(!user) {
         throw new ApiError("Please Login");
     }
-    
+
     const video= await Video.findOneAndDelete({_id: req.params?.id, owner: user._id});
     if(!video) {
         throw new ApiError(404,"Video Not Found in your profile.");
